@@ -12,6 +12,13 @@
     return;
   }
 
+  // Captcha/anti-spam tokens, not real form data — never capture these.
+  var EXCLUDED_FIELDS = [
+    "g-recaptcha-response",
+    "h-captcha-response",
+    "cf-turnstile-response",
+  ];
+
   document.addEventListener(
     "submit",
     function (event) {
@@ -21,6 +28,7 @@
       try {
         var data = {};
         new FormData(form).forEach(function (value, key) {
+          if (EXCLUDED_FIELDS.indexOf(key) !== -1) return;
           data[key] = typeof value === "string" ? value : value.name || "";
         });
 
