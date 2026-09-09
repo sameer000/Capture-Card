@@ -30,15 +30,19 @@
           data: data,
         });
 
+        // text/plain keeps this a CORS-simple request (no preflight OPTIONS).
+        // A preflighted beacon/fetch can be dropped by the browser if the page
+        // navigates or unmounts the form between the OPTIONS and the actual
+        // POST, which is exactly what host sites with an AJAX form submit do.
         var sent = false;
         if (navigator.sendBeacon) {
-          var blob = new Blob([payload], { type: "application/json" });
+          var blob = new Blob([payload], { type: "text/plain" });
           sent = navigator.sendBeacon(endpoint, blob);
         }
         if (!sent) {
           fetch(endpoint, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "text/plain" },
             body: payload,
             keepalive: true,
             mode: "cors",
