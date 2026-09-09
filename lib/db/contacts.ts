@@ -9,6 +9,7 @@ export interface Contact {
   pageUrl: string;
   userAgent?: string;
   createdAt: Date;
+  deletedAt?: Date;
 }
 
 async function contactsCollection() {
@@ -31,10 +32,35 @@ export async function listContactsBySiteId(
 ): Promise<Contact[]> {
   const collection = await contactsCollection();
   return collection
-    .find({ siteId })
+    .find({ siteId, deletedAt: { $exists: false } })
     .sort({ createdAt: -1 })
     .limit(limit)
     .toArray();
+}
+
+export async function listDeletedContactsBySiteId(
+  siteId: string,
+  limit = 200
+): Promise<Contact[]> {
+  const collection = await contactsCollection();
+  return collection
+    .find({ siteId, deletedAt: { $exists: true } })
+    .sort({ deletedAt: -1 })
+    .limit(limit)
+    .toArray();
+}
+
+export async function softDeleteContact(
+  siteId: string,
+  contactId: string
+): Promise<boolean> {
+  const { ObjectId } = await import("mongodb");
+  const collection = await contactsCollection();
+  const result = await collection.updateOne(
+    { _id: new ObjectId(contactId), siteId },
+    { $set: { deletedAt: new Date() } }
+  );
+  return result.matchedCount > 0;
 }
 
 export async function deleteContactsBySiteId(siteId: string): Promise<void> {
